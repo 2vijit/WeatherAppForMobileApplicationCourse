@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:weather_today_completed/services/weather.dart';
 import 'package:weather_today_completed/utils/constants.dart';
 import '../utils/custom_paint.dart';
 import 'city_screen.dart';
@@ -30,8 +31,14 @@ class LocationScreenState extends State<LocationScreen> {
 
   void updateUI(dynamic weatherData) {
     setState(() {
-      double temp = weatherData['main']['temp'];
-      temperature = temp.toInt();
+      if (weatherData != null) {
+        temperature = weatherData['main']['temp'].toInt();
+        minTemperature = weatherData['main']['temp_min'].toInt();
+        maxTemperature = weatherData['main']['temp_max'].toInt();
+        windSpeed = weatherData['wind']['speed'].toDouble();
+        humidity = weatherData['main']['humidity'].toInt();
+        cityName = weatherData['name'];
+      }
     });
   }
 
@@ -72,7 +79,10 @@ class LocationScreenState extends State<LocationScreen> {
                       ),
                     ),
                     GestureDetector(
-                      onTap: () async {},
+                      onTap: () async {
+                        var weatherData = await WeatherApi.getCurrentLocation();
+                        updateUI(weatherData);
+                      },
                       child: Image.asset(
                         'images/ic_current_location.png',
                         width: 32.0,
@@ -80,17 +90,19 @@ class LocationScreenState extends State<LocationScreen> {
                     ),
                     SizedBox(width: 24.0),
                     GestureDetector(
-                      onTap: () {
-                        final cityName = Navigator.push(
+                      onTap: () async {
+                        Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) {
                               return CityScreen();
                             },
                           ),
-                        );
-
-                        //use city name
+                        ).then((value) async {
+                          var weatherData =
+                              await WeatherApi.getCityWeather(value.toString());
+                          updateUI(weatherData);
+                        });
                       },
                       child: Image.asset(
                         'images/ic_search.png',
